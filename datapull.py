@@ -5,11 +5,11 @@ import time
 import random
 
 # --- 1. AYARLAR BÖLÜMÜ ---
-BOLUM_ADI = "Dermatoloji"
-BASE_URL = "https://www.doktorsitesi.com/blog/sorular/dermatoloji"
+BOLUM_ADI = "Kulak Burun Boğaz"
+BASE_URL = "https://www.doktorsitesi.com/blog/sorular/kulak-burun-bogaz-hastaliklari"
 
-BASLANGIC_SAYFASI = 40
-BITIS_SAYFASI = 700  # Test için 5'e düşürüldü. Çalışırsa 700 yaparsınız.
+BASLANGIC_SAYFASI = 1
+BITIS_SAYFASI = 400 # Test için 5'e düşürüldü. Çalışırsa 700 yaparsınız.
 
 # Her liste sayfası arasında bekleyeceğimiz min/max saniye
 LISTE_BEKLEME_MIN = 4
@@ -17,7 +17,7 @@ LISTE_BEKLEME_MAX = 8
 
 # Her bir soru detayına girerken bekleyeceğimiz min/max saniye
 DETAY_BEKLEME_MIN = 1
-DETAY_BEKLEME_MAX = 3
+DETAY_BEKLEME_MAX = 2
 
 # İnsan Taklidi için Tarayıcı Kimlikleri
 USER_AGENTS = [
@@ -44,7 +44,6 @@ def get_question_detail(session, question_url):
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # --- DÜZELTME (SİZİN BULGUNUZA GÖRE) ---
             # Tam metnin bulunduğu div'in class'ı güncellendi.
             question_div = soup.find('div', class_='prose prose-lg max-w-none mb-6 text-gray-700')
 
@@ -74,7 +73,6 @@ def veri_cekme_islemini_baslat():
 
         for sayfa_numarasi in range(BASLANGIC_SAYFASI, BITIS_SAYFASI + 1):
 
-            # Her liste sayfası isteği için yeni bir tarayıcı kimliği al
             session.headers.update({'User-Agent': random.choice(USER_AGENTS)})
 
             url = f"{BASE_URL}?sayfa={sayfa_numarasi}"
@@ -85,7 +83,6 @@ def veri_cekme_islemini_baslat():
 
                 if response.status_code != 200:
                     print(f"[HATA] Liste sayfası çekilemedi. Status Code: {response.status_code}")
-                    print("Sunucu engellemesi olabilir. Script durduruluyor.")
                     break
 
                 soup = BeautifulSoup(response.content, 'html.parser')
