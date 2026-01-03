@@ -11,7 +11,7 @@ class ModelService:
             cls._instance = super(ModelService, cls).__new__(cls)
             cls._instance.model = None
             cls._instance.tokenizer = None
-            cls._instance.model_path = "C:/Users/asdha/.gemini/antigravity/scratch/ai_complaint_service/model" # Modelin bulanacağı klasör
+            cls._instance.model_path = "C:/Users/asdha/PycharmProjects/TestAIApp/ai_complaint_service/model_v2" # Modelin bulanacağı klasör
         return cls._instance
 
     def load_model(self):
@@ -46,11 +46,26 @@ class ModelService:
             outputs = self.model(**inputs)
         
         probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
-        score, predicted_class_idx = torch.max(probabilities, dim=-1)
         
-        # id2label mapping varsa onu kullan, yoksa index dön
-        label = str(predicted_class_idx.item())
-        if hasattr(self.model.config, 'id2label') and self.model.config.id2label:
-             label = self.model.config.id2label[predicted_class_idx.item()]
+        # Top-K (örneğin Top 5) skorları al
+        top_k_scores, top_k_indices = torch.topk(probabilities, k=min(5, probabilities.shape[-1]), dim=-1)
+        
+        predictions_list = []
+        for score, idx in zip(top_k_scores[0], top_k_indices[0]):
+            label_text = str(idx.item())
+            if hasattr(self.model.config, 'id2label') and self.model.config.id2label:
+                 label_text = self.model.config.id2label[idx.item()]
+            
+            predictions_list.append({
+                "label": label_text,
+                "score": float(score)
+            })
 
-        return {"label": label, "score": float(score)}
+        # En yüksek skorlu olanı ana cevap olarak da dönelim (geriye uyumluluk için)
+        best_prediction = predictions_list[0]
+        
+        return {
+            "label": best_prediction["label"], 
+            "score": best_prediction["score"],
+            "predictions": predictions_list
+        }
